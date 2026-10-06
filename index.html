@@ -1,0 +1,1034 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <title>DRIVE AWAKE — Driver Monitoring System</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <style>
+        :root {
+            color-scheme: dark;
+            --bg: #0b0d10;
+            --p: #12151a;
+            --p2: #171b21;
+            --bd: #242a33;
+            --tx: #e6e9ee;
+            --mu: #8a94a3;
+            --g: #3ddc84;
+            --a: #ffb020;
+            --r: #ff4d4f;
+            --st: var(--g);
+            box-sizing: border-box;
+            padding-top: env(safe-area-inset-top, 0px);
+            padding-bottom: env(safe-area-inset-bottom, 0px)
+        }
+
+        body[data-l=caution] {
+            --st: var(--a)
+        }
+
+        body[data-l=critical] {
+            --st: var(--r)
+        }
+
+        * {
+            box-sizing: border-box
+        }
+
+        html,
+        body {
+            height: 100%
+        }
+
+        body {
+            margin: 0;
+            background: var(--bg);
+            color: var(--tx);
+            font: 13px/1.45 Inter, system-ui, -apple-system, Segoe UI, sans-serif;
+            display: flex
+        }
+
+        .mono {
+            font-family: ui-monospace, SFMono-Regular, Menlo, monospace
+        }
+
+        nav {
+            width: 200px;
+            flex: none;
+            background: var(--p);
+            border-right: 1px solid var(--bd);
+            display: flex;
+            flex-direction: column;
+            padding: 16px 10px
+        }
+
+        .logo {
+            font-weight: 700;
+            letter-spacing: .2em;
+            font-size: 13px;
+            padding: 4px 10px 18px
+        }
+
+        .logo i {
+            color: var(--st);
+            font-style: normal
+        }
+
+        nav button {
+            all: unset;
+            cursor: pointer;
+            padding: 8px 10px;
+            border-radius: 6px;
+            color: var(--mu);
+            font-size: 12.5px
+        }
+
+        nav button:hover {
+            background: var(--p2);
+            color: var(--tx)
+        }
+
+        nav button.on {
+            background: var(--p2);
+            color: var(--tx);
+            box-shadow: inset 2px 0 var(--st)
+        }
+
+        .nb {
+            margin-top: auto;
+            padding: 10px;
+            font-size: 10.5px;
+            color: var(--mu);
+            border-top: 1px solid var(--bd)
+        }
+
+        main {
+            flex: 1;
+            min-width: 0;
+            overflow: auto;
+            padding: 18px 22px 40px
+        }
+
+        .led {
+            display: inline-block;
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: var(--g);
+            box-shadow: 0 0 6px var(--g);
+            margin-right: 6px
+        }
+
+        .led.st {
+            background: var(--st);
+            box-shadow: 0 0 6px var(--st)
+        }
+
+        h1 {
+            font-size: 18px;
+            margin: 0 0 4px;
+            font-weight: 600
+        }
+
+        h2 {
+            font-size: 11px;
+            letter-spacing: .14em;
+            color: var(--mu);
+            margin: 0 0 10px;
+            font-weight: 600;
+            text-transform: uppercase
+        }
+
+        .top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 14px
+        }
+
+        .card {
+            background: linear-gradient(180deg, var(--p2), var(--p));
+            border: 1px solid var(--bd);
+            border-radius: 10px;
+            padding: 14px;
+            box-shadow: 0 8px 24px #0006
+        }
+
+        .grid {
+            display: grid;
+            gap: 12px
+        }
+
+        .g2 {
+            grid-template-columns: repeat(2, 1fr)
+        }
+
+        .g3 {
+            grid-template-columns: repeat(3, 1fr)
+        }
+
+        .g4 {
+            grid-template-columns: repeat(4, 1fr)
+        }
+
+        .live {
+            grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr)
+        }
+
+        .chip {
+            display: inline-flex;
+            align-items: center;
+            font-size: 10.5px;
+            padding: 3px 8px;
+            border: 1px solid var(--bd);
+            border-radius: 20px;
+            color: var(--mu);
+            margin: 0 4px 4px 0;
+            background: #0e1115
+        }
+
+        .btn {
+            cursor: pointer;
+            border: 1px solid var(--bd);
+            background: var(--p2);
+            color: var(--tx);
+            padding: 8px 14px;
+            border-radius: 7px;
+            font-size: 12px
+        }
+
+        .btn:hover {
+            border-color: #3a4350
+        }
+
+        .btn.pri {
+            background: var(--tx);
+            color: #0b0d10;
+            font-weight: 600;
+            border: 0
+        }
+
+        .cam {
+            position: relative;
+            aspect-ratio: 16/10;
+            border-radius: 8px;
+            overflow: hidden;
+            background: #000;
+            border: 1px solid var(--bd)
+        }
+
+        .cam canvas,
+        .cam video {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover
+        }
+
+        .hud {
+            position: absolute;
+            font-size: 10.5px;
+            line-height: 1.55;
+            color: #cfe;
+            text-shadow: 0 1px 2px #000;
+            pointer-events: none
+        }
+
+        .hud b {
+            color: #fff;
+            font-weight: 600
+        }
+
+        .m {
+            font-size: 22px;
+            font-weight: 600;
+            font-variant-numeric: tabular-nums
+        }
+
+        .sub {
+            font-size: 10.5px;
+            color: var(--mu);
+            letter-spacing: .1em
+        }
+
+        .gauge {
+            text-align: center
+        }
+
+        .gauge svg {
+            width: 100%;
+            max-width: 120px
+        }
+
+        .gauge .m {
+            margin-top: -46px;
+            position: relative
+        }
+
+        .bar {
+            height: 6px;
+            background: #0d1014;
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 4px 0 8px
+        }
+
+        .bar>i {
+            display: block;
+            height: 100%;
+            background: var(--st);
+            transition: width .3s
+        }
+
+        .row {
+            display: flex;
+            justify-content: space-between;
+            padding: 5px 0;
+            border-bottom: 1px solid #1b2027
+        }
+
+        .row span:first-child {
+            color: var(--mu)
+        }
+
+        .alert {
+            border-left: 3px solid var(--st);
+            padding: 10px 12px;
+            background: #0e1115;
+            border-radius: 6px;
+            transition: .4s
+        }
+
+        body[data-l=critical] .alert {
+            animation: pulse 1.2s infinite
+        }
+
+        @keyframes pulse {
+            50% {
+                box-shadow: 0 0 0 1px var(--r), 0 0 22px #ff4d4f44
+            }
+        }
+
+        .tl div {
+            display: flex;
+            gap: 10px;
+            padding: 5px 0;
+            border-bottom: 1px solid #1b2027;
+            font-size: 12px
+        }
+
+        .tl time {
+            color: var(--mu);
+            width: 62px;
+            flex: none
+        }
+
+        .tag {
+            font-size: 10px;
+            padding: 1px 6px;
+            border-radius: 4px;
+            margin-left: auto
+        }
+
+        .n {
+            background: #3ddc8422;
+            color: var(--g)
+        }
+
+        .c {
+            background: #ffb02022;
+            color: var(--a)
+        }
+
+        .k {
+            background: #ff4d4f22;
+            color: var(--r)
+        }
+
+        .flow {
+            display: flex;
+            align-items: stretch;
+            gap: 8px;
+            flex-wrap: wrap
+        }
+
+        .flow>.node {
+            flex: 1;
+            min-width: 110px;
+            background: #0e1115;
+            border: 1px solid var(--bd);
+            border-radius: 8px;
+            padding: 10px;
+            position: relative;
+            cursor: default
+        }
+
+        .flow>.node:hover {
+            border-color: var(--st)
+        }
+
+        .flow>.node .tip {
+            display: none;
+            position: absolute;
+            left: 0;
+            top: 100%;
+            margin-top: 6px;
+            z-index: 5;
+            background: #1b2027;
+            border: 1px solid #333b47;
+            padding: 8px;
+            border-radius: 6px;
+            width: 210px;
+            font-size: 11px;
+            color: var(--mu)
+        }
+
+        .flow>.node:hover .tip {
+            display: block
+        }
+
+        .arr {
+            align-self: center;
+            color: var(--mu)
+        }
+
+        .node.act {
+            border-color: var(--st);
+            box-shadow: 0 0 0 1px var(--st) inset
+        }
+
+        .sw {
+            width: 34px;
+            height: 18px;
+            border-radius: 10px;
+            background: #2a313b;
+            position: relative;
+            cursor: pointer;
+            flex: none;
+            transition: .2s
+        }
+
+        .sw::after {
+            content: "";
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: #aab;
+            transition: .2s
+        }
+
+        .sw.on {
+            background: #1f6b45
+        }
+
+        .sw.on::after {
+            left: 18px;
+            background: var(--g)
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px
+        }
+
+        td,
+        th {
+            text-align: left;
+            padding: 7px 8px;
+            border-bottom: 1px solid #1b2027
+        }
+
+        th {
+            color: var(--mu);
+            font-weight: 500;
+            font-size: 10.5px;
+            letter-spacing: .1em
+        }
+
+        canvas.ch {
+            width: 100%;
+            height: 90px;
+            display: block
+        }
+
+        .hero {
+            position: relative;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid var(--bd);
+            margin-bottom: 14px
+        }
+
+        .hero .cam {
+            aspect-ratio: 21/9;
+            border: 0;
+            border-radius: 0
+        }
+
+        .hero .ov {
+            position: absolute;
+            left: 28px;
+            bottom: 26px;
+            max-width: 520px
+        }
+
+        .hero h1 {
+            font-size: 44px;
+            letter-spacing: .22em;
+            font-weight: 700;
+            margin: 0
+        }
+
+        .hero p {
+            color: #b8c0cc;
+            margin: 6px 0
+        }
+
+        .ph {
+            cursor: pointer
+        }
+
+        .ph.on {
+            border-color: var(--st)
+        }
+
+        #toast {
+            position: fixed;
+            right: 18px;
+            bottom: 18px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            z-index: 9
+        }
+
+        #toast div {
+            background: #1b2027;
+            border: 1px solid var(--bd);
+            border-left: 3px solid var(--st);
+            padding: 9px 12px;
+            border-radius: 6px;
+            animation: in .3s
+        }
+
+        @keyframes in {
+            from {
+                opacity: 0;
+                transform: translateY(8px)
+            }
+        }
+
+        view {
+            display: none
+        }
+
+        view.on {
+            display: block;
+            animation: in .3s
+        }
+
+        @media(max-width:1000px) {
+
+            .live,
+            .g4 {
+                grid-template-columns: 1fr 1fr
+            }
+
+            .live {
+                grid-template-columns: 1fr
+            }
+
+            .g3 {
+                grid-template-columns: 1fr 1fr
+            }
+        }
+
+        @media(max-width:700px) {
+            body {
+                flex-direction: column
+            }
+
+            nav {
+                width: 100%;
+                flex-direction: row;
+                overflow-x: auto;
+                padding: 8px;
+                border: 0;
+                border-bottom: 1px solid var(--bd)
+            }
+
+            nav .logo,
+            nav .nb {
+                display: none
+            }
+
+            nav button {
+                white-space: nowrap
+            }
+
+            main {
+                padding: 12px
+            }
+
+            .g2,
+            .g3,
+            .g4 {
+                grid-template-columns: 1fr 1fr
+            }
+
+            .hero h1 {
+                font-size: 26px
+            }
+
+            .hero .ov {
+                left: 14px;
+                bottom: 12px
+            }
+
+            .hero p {
+                display: none
+            }
+
+            .hud {
+                font-size: 9px
+            }
+        }
+    </style>
+</head>
+
+<body data-l="normal">
+    <nav>
+        <div class="logo">DRIVE <i>AWAKE</i></div>
+        <div id="nav"></div>
+        <div class="nb"><span class="led"></span>SYSTEM ONLINE<br>MODEL v1.0</div>
+    </nav>
+    <main>
+        <div class="top">
+            <div>
+                <h1 id="ttl">Overview</h1><span class="chip mono">DA-CORE-01</span><span
+                    class="chip mono">CABIN-CAM-01</span><span class="chip mono">DRIVE-AWAKE-CNN-v1</span><span
+                    class="chip"><span class="led st"></span><span id="src">SIMULATION MODE</span></span><span
+                    class="chip">MODEL: NOT RUNNING · DEMO TELEMETRY</span>
+            </div>
+            <div><button class="btn" id="camBtn">Enable Camera</button> <button class="btn pri" id="simBtn">START
+                    SIMULATION</button></div>
+        </div>
+
+        <view id="v-overview">
+            <div class="hero">
+                <div class="cam"><canvas data-scene></canvas></div>
+                <div class="ov">
+                    <h1>DRIVE AWAKE</h1>
+                    <p style="font-size:15px;color:#fff">AI-Based Driver Drowsiness &amp; Distraction Detection</p>
+                    <p>Continuous computer vision that watches the driver — not the road alone.</p>
+                    <div><span class="chip"><span class="led"></span>SYSTEM ONLINE</span><span class="chip"><span
+                                class="led"></span>CAMERA CONNECTED</span><span class="chip"><span
+                                class="led"></span>PIPELINE READY</span><span class="chip"><span
+                                class="led"></span>REAL-TIME MONITORING</span></div><br><button class="btn pri"
+                        onclick="go('live')">Launch Safety Monitor</button> <button class="btn"
+                        onclick="go('model')">Explore System</button>
+                </div>
+            </div>
+            <div class="card">
+                <h2>Signal path</h2>
+                <div class="flow" id="pipe"></div>
+            </div>
+            <div class="grid g3" style="margin-top:12px" id="layers"></div>
+        </view>
+
+        <view id="v-live">
+            <div class="grid live">
+                <div class="card">
+                    <div class="cam" id="liveCam"><video id="vid" autoplay muted playsinline
+                            style="display:none"></video><canvas data-scene></canvas>
+                        <div class="hud" style="left:10px;top:8px"><b>● FACE DETECTED</b><br>EAR: <b
+                                data-b="ear"></b><br>PERCLOS: <b data-b="perclos"></b><br>HEAD YAW: <b
+                                data-b="yaw"></b><br>HEAD PITCH: <b data-b="pitch"></b></div>
+                        <div class="hud" style="right:10px;top:8px;text-align:right">PHONE: <b
+                                data-b="phone"></b><br>GAZE: <b data-b="gaze"></b><br>FPS: <b
+                                data-b="fps"></b><br>LATENCY: <b data-b="lat"></b><br>CONF: <b data-b="conf2"></b></div>
+                        <div class="hud" style="left:10px;bottom:8px" id="camlbl">CABIN-CAM-01 · SIMULATED FEED</div>
+                    </div>
+                    <div style="margin-top:12px">
+                        <h2>Session timeline</h2>
+                        <div class="tl" id="tlMini"></div>
+                    </div>
+                </div>
+                <div class="grid" style="align-content:start">
+                    <div class="card">
+                        <div class="grid g2">
+                            <div class="gauge"><svg viewBox="0 0 100 60">
+                                    <path d="M10 55A40 40 0 0 1 90 55" fill="none" stroke="#222831" stroke-width="8"
+                                        stroke-linecap="round" />
+                                    <path class="ga" data-g="drow" d="M10 55A40 40 0 0 1 90 55" fill="none"
+                                        stroke="var(--st)" stroke-width="8" stroke-linecap="round" pathLength="100"
+                                        stroke-dasharray="0 100" />
+                                </svg>
+                                <div class="m" data-b="drow"></div>
+                                <div class="sub">DROWSINESS</div>
+                            </div>
+                            <div class="gauge"><svg viewBox="0 0 100 60">
+                                    <path d="M10 55A40 40 0 0 1 90 55" fill="none" stroke="#222831" stroke-width="8"
+                                        stroke-linecap="round" />
+                                    <path class="ga" data-g="dist" d="M10 55A40 40 0 0 1 90 55" fill="none"
+                                        stroke="var(--st)" stroke-width="8" stroke-linecap="round" pathLength="100"
+                                        stroke-dasharray="0 100" />
+                                </svg>
+                                <div class="m" data-b="dist"></div>
+                                <div class="sub">DISTRACTION</div>
+                            </div>
+                        </div>
+                        <div class="row" style="margin-top:10px"><span>ATTENTION</span><b style="color:var(--st)"
+                                data-b="att"></b></div>
+                        <div class="row"><span>CONFIDENCE</span><b data-b="conf"></b></div>
+                        <div class="row"><span>RISK LEVEL</span><b style="color:var(--st)" data-b="risk"></b></div>
+                    </div>
+                    <div class="card">
+                        <h2>Alert state</h2>
+                        <div class="alert" id="alertBox"></div>
+                    </div>
+                    <div class="card">
+                        <h2>Attention split</h2>
+                        <div class="row"><span>ROAD</span><b data-b="road"></b></div>
+                        <div class="bar"><i data-w="road"></i></div>
+                        <div class="row"><span>OFF-ROAD</span><b data-b="off"></b></div>
+                        <div class="bar"><i data-w="off" style="background:var(--a)"></i></div>
+                    </div>
+                </div>
+            </div>
+        </view>
+
+        <view id="v-drowsiness">
+            <div class="grid g2">
+                <div class="card">
+                    <h2>Eye aspect ratio (live)</h2><canvas class="ch" id="c_ear" style="height:150px"></canvas>
+                    <div class="sub mono">OPEN ≈ 0.31 · CLOSED ≈ 0.12</div>
+                </div>
+                <div class="card">
+                    <h2>PERCLOS (60 s window)</h2>
+                    <div class="m" data-b="perclos" style="font-size:38px"></div>
+                    <div class="sub" data-b="pstat"></div>
+                    <div class="bar"><i data-w="perclos5"></i></div>
+                    <div class="flow" style="margin-top:12px">
+                        <div class="node">EAR</div><span class="arr">→</span>
+                        <div class="node">Temporal</div><span class="arr">→</span>
+                        <div class="node">PERCLOS</div><span class="arr">→</span>
+                        <div class="node act">Fatigue</div>
+                    </div>
+                </div>
+            </div>
+            <div class="grid g4" style="margin-top:12px" id="drowCards"></div>
+        </view>
+
+        <view id="v-distraction">
+            <div class="grid g2">
+                <div class="card">
+                    <h2>Head pose</h2><canvas id="pose" width="300" height="190"
+                        style="width:100%;max-width:340px"></canvas>
+                    <div class="grid g3">
+                        <div>
+                            <div class="sub">YAW</div>
+                            <div class="m" data-b="yaw"></div>
+                        </div>
+                        <div>
+                            <div class="sub">PITCH</div>
+                            <div class="m" data-b="pitch"></div>
+                        </div>
+                        <div>
+                            <div class="sub">ROLL</div>
+                            <div class="m" data-b="roll"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card">
+                    <h2>Distraction signals</h2>
+                    <div class="row"><span>GAZE</span><b data-b="gaze"></b></div>
+                    <div class="row"><span>OFF-ROAD TIME</span><b data-b="offt"></b></div>
+                    <div class="row"><span>PHONE</span><b data-b="phone"></b></div><br>
+                    <div class="sub">ROAD ATTENTION</div>
+                    <div class="bar"><i data-w="road"></i></div>
+                    <div class="sub">OFF-ROAD ATTENTION</div>
+                    <div class="bar"><i data-w="off" style="background:var(--a)"></i></div>
+                    <h2 style="margin-top:14px">Object detection</h2>
+                    <table>
+                        <tr>
+                            <th>OBJECT</th>
+                            <th>CONF</th>
+                            <th>LOCATION</th>
+                            <th>DURATION</th>
+                        </tr>
+                        <tr>
+                            <td>PHONE</td>
+                            <td data-b="pconf"></td>
+                            <td>Driver hand region</td>
+                            <td data-b="offt"></td>
+                        </tr>
+                        <tr>
+                            <td>HANDS</td>
+                            <td>96%</td>
+                            <td>Wheel</td>
+                            <td>—</td>
+                        </tr>
+                        <tr>
+                            <td>CUP</td>
+                            <td>71%</td>
+                            <td>Console</td>
+                            <td>—</td>
+                        </tr>
+                    </table>
+                    <div class="alert" style="margin-top:10px" id="distEv"></div>
+                </div>
+            </div>
+        </view>
+
+        <view id="v-model">
+            <div class="card">
+                <h2>Driver state classifier — DRIVE-AWAKE-CNN-v1</h2><svg viewBox="0 0 760 130" style="width:100%"
+                    font-size="10" fill="#8a94a3" font-family="ui-monospace,monospace">
+                    <g stroke="#2d3541" fill="#12161b">
+                        <rect x="5" y="30" width="70" height="70" />
+                        <rect x="115" y="25" width="40" height="80" />
+                        <rect x="125" y="35" width="40" height="80" />
+                        <rect x="215" y="35" width="30" height="60" />
+                        <rect x="225" y="45" width="30" height="60" />
+                        <rect x="305" y="45" width="22" height="40" />
+                        <rect x="315" y="55" width="22" height="40" />
+                    </g>
+                    <g stroke="#3a4350">
+                        <line x1="75" y1="65" x2="115" y2="65" />
+                        <line x1="170" y1="65" x2="215" y2="65" />
+                        <line x1="260" y1="65" x2="305" y2="65" />
+                        <line x1="345" y1="65" x2="400" y2="65" />
+                        <line x1="480" y1="65" x2="520" y2="65" />
+                    </g>
+                    <g stroke="#2d3541" fill="#12161b">
+                        <rect x="400" y="30" width="80" height="70" />
+                    </g><text x="5" y="115">INPUT 96×96</text><text x="110" y="125">CONV</text><text x="212"
+                        y="125">FEATURE MAPS</text><text x="300" y="118">POOL</text><text x="405"
+                        y="115">DENSE</text><text x="410" y="68">128 → 64</text>
+                    <g fill="#cfd5de"><text x="530" y="35">EYES OPEN</text><text x="530" y="55">EYES CLOSED</text><text
+                            x="530" y="75">YAWNING</text><text x="530" y="95">ATTENTIVE</text><text x="530"
+                            y="115">DISTRACTED</text></g>
+                    <g fill="var(--st)"><text x="660" y="35" data-b="p0"></text><text x="660" y="55"
+                            data-b="p1"></text><text x="660" y="75" data-b="p2"></text><text x="660" y="95"
+                            data-b="p3"></text><text x="660" y="115" data-b="p4"></text></g>
+                </svg>
+                <div class="grid g4">
+                    <div>
+                        <div class="sub">INFERENCE</div>Real-time
+                    </div>
+                    <div>
+                        <div class="sub">CONFIDENCE</div><b data-b="conf"></b>
+                    </div>
+                    <div>
+                        <div class="sub">LATENCY</div><b data-b="lat"></b>
+                    </div>
+                    <div>
+                        <div class="sub">DEVICE</div>Edge / Local
+                    </div>
+                </div>
+                <p class="sub">Illustrative architecture. Output probabilities are simulated from demo state; no trained
+                    model is bundled in this page.</p>
+            </div>
+        </view>
+
+        <view id="v-risk">
+            <div class="card">
+                <h2>Risk fusion — no single signal decides</h2>
+                <div class="grid g3" id="inputs"></div>
+                <div class="flow" style="margin-top:14px">
+                    <div class="node act" style="text-align:center">AI RISK FUSION<br><span class="m"
+                            data-b="fused"></span></div><span class="arr">→</span>
+                    <div class="node" data-lv="normal">LOW</div>
+                    <div class="node" data-lv="caution">MEDIUM</div>
+                    <div class="node" data-lv="critical">HIGH</div><span class="arr">→</span>
+                    <div class="node" data-ac="normal">MONITOR</div>
+                    <div class="node" data-ac="caution">VISUAL WARNING</div>
+                    <div class="node" data-ac="critical">AUDIO WARNING</div>
+                </div>
+            </div>
+        </view>
+
+        <view id="v-events">
+            <div class="card">
+                <h2>Event log</h2>
+                <div style="margin-bottom:8px" id="flt"></div>
+                <div class="tl" id="tlFull"></div>
+            </div>
+        </view>
+
+        <view id="v-performance">
+            <div class="grid g4" id="perfK"></div>
+            <div class="grid g2" style="margin-top:12px">
+                <div class="card">
+                    <h2>Latency (ms)</h2><canvas class="ch" id="c_lat"></canvas>
+                </div>
+                <div class="card">
+                    <h2>Confidence (%)</h2><canvas class="ch" id="c_conf"></canvas>
+                </div>
+                <div class="card">
+                    <h2>Risk score</h2><canvas class="ch" id="c_risk"></canvas>
+                </div>
+                <div class="card">
+                    <h2>FPS</h2><canvas class="ch" id="c_fps"></canvas>
+                </div>
+            </div>
+        </view>
+
+        <view id="v-testing">
+            <div class="card">
+                <h2>Scenario test matrix</h2>
+                <table id="tests"></table>
+            </div>
+        </view>
+
+        <view id="v-privacy">
+            <div class="card">
+                <h1>Privacy by Design</h1>
+                <div class="grid g3" style="margin:12px 0">
+                    <div><b>LOCAL-FIRST</b><br><span class="sub">Prefer on-device inference.</span></div>
+                    <div><b>DATA MINIMIZATION</b><br><span class="sub">Store only what is necessary.</span></div>
+                    <div><b>TRANSPARENCY</b><br><span class="sub">Clearly communicate what is detected and why.</span>
+                    </div>
+                </div>
+                <div id="priv"></div>
+            </div>
+        </view>
+
+        <view id="v-deployment">
+            <div class="flow" id="dep"></div>
+            <div class="card" style="margin-top:12px">
+                <h2>Stack</h2><span class="chip">Python</span><span class="chip">OpenCV</span><span
+                    class="chip">MediaPipe</span><span class="chip">PyTorch / TensorFlow</span><span
+                    class="chip">NumPy</span><span class="chip">Pandas</span><span class="chip">Optional YOLO</span>
+                <div id="depd" style="margin-top:8px"></div>
+            </div>
+            <div class="grid g3" style="margin-top:12px">
+                <div class="card">
+                    <h2>Multimodal AI</h2>Camera + steering + CAN data + wearables + cabin audio
+                </div>
+                <div class="card">
+                    <h2>Edge AI</h2>Quantization · model compression · GPU/NPU acceleration
+                </div>
+                <div class="card">
+                    <h2>Smarter safety</h2>Personal baselines · predictive fatigue · adaptive warnings · fleet analytics
+                </div>
+            </div>
+        </view>
+
+        <view id="v-roadmap">
+            <div class="card">
+                <h2>Development roadmap</h2>
+                <div class="flow" id="road"></div>
+                <div id="roadd" style="margin-top:12px"></div>
+            </div>
+        </view>
+    </main>
+    <div id="toast"></div>
+    <script>
+        const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)], cl = (v, a, b) => Math.min(b, Math.max(a, v));
+        const V = [['overview', 'Overview'], ['live', 'Live Monitor'], ['drowsiness', 'Drowsiness'], ['distraction', 'Distraction'], ['model', 'AI Model'], ['risk', 'Risk Engine'], ['events', 'Events'], ['performance', 'Performance'], ['testing', 'Testing'], ['privacy', 'Privacy'], ['deployment', 'Deployment'], ['roadmap', 'Roadmap']];
+        $('#nav').innerHTML = V.map(v => `<button data-v="${v[0]}">${v[1]}</button>`).join('');
+        function go(id) { $$('view').forEach(e => e.classList.toggle('on', e.id == 'v-' + id)); $$('#nav button').forEach(b => b.classList.toggle('on', b.dataset.v == id)); $('#ttl').textContent = V.find(v => v[0] == id)[1]; cur = id }
+        let cur = 'overview'; $$('#nav button').forEach(b => b.onclick = () => go(b.dataset.v)); go('overview');
+        function toast(t) { const d = document.createElement('div'); d.textContent = t; $('#toast').append(d); setTimeout(() => d.remove(), 3500) }
+        // ---- state
+        const base = { drow: 8, dist: 5, conf: 94, ear: .31, perclos: 4.2, yaw: 8, pitch: -3, roll: 2, off: 8, offt: .8, yawn: 0, pconf: 0, fps: 28, lat: 41 };
+        const S = { ...base, gaze: 'ROAD', phone: false }, T = { ...base };
+        let closed = 0, blinkT = 0, t0 = Date.now(), hist = { ear: [], lat: [], conf: [], risk: [], fps: [] }, lvl = 'normal', events = [], flt = 'All', sim = null;
+        const lv = () => { const m = Math.max(S.drow, S.dist); return m < 35 ? 'normal' : m < 65 ? 'caution' : 'critical' };
+        const F = { drow: v => Math.round(v) + '%', dist: v => Math.round(v) + '%', conf: v => Math.round(v) + '%', conf2: v => (v / 100).toFixed(2), ear: v => v.toFixed(2), perclos: v => v.toFixed(1) + '%', yaw: v => (v >= 0 ? '+' : '') + Math.round(v) + '°', pitch: v => (v >= 0 ? '+' : '') + Math.round(v) + '°', roll: v => Math.round(v) + '°', phone: v => v ? 'DETECTED' : 'NOT DETECTED', gaze: v => v, fps: v => Math.round(v), lat: v => Math.round(v) + ' ms', road: () => Math.round(100 - S.off) + '%', off: () => Math.round(S.off) + '%', offt: () => S.offt.toFixed(1) + ' sec', pconf: () => S.phone ? Math.round(S.pconf) + '%' : '—', att: () => ({ normal: 'NORMAL', caution: 'CAUTION', critical: 'CRITICAL' }[lvl]), risk: () => ({ normal: 'LOW', caution: 'MEDIUM', critical: 'HIGH' }[lvl]), pstat: () => S.perclos < 8 ? 'SAFE' : S.perclos < 15 ? 'ELEVATED' : 'FATIGUE EVIDENCE', fused: () => Math.round(Math.max(S.drow, S.dist)) + '/100' };
+        ['p0', 'p1', 'p2', 'p3', 'p4'].forEach((k, i) => F[k] = () => {
+            const c = cl(S.drow / 100, 0, 1), y = S.yawn, d = cl(S.dist / 100, 0, 1); return Math.round([(1 - c) * (1 - y) * .97, c * .9, y * .9, (1 - d) * (1 - c), d]
+            [i] * 100) + '%'
+        });
+        const W = { road: () => 100 - S.off, off: () => S.off, perclos5: () => S.perclos * 5 };
+        // ---- ui builds
+        $('#pipe').innerHTML = [['Camera', 'Cabin IR camera, 30 fps, near-infrared capable.'], ['Preprocessing', 'Resize, normalise, illumination correction (OpenCV).'], ['Face / Pose', 'Face detection, landmarks, head pose solve.'], ['Features', 'EAR, MAR, PERCLOS, gaze vector, object cues.'], ['AI Fusion', 'CNN output fused with temporal features.'], ['Risk Engine', 'Weighted, time-aware scoring with hysteresis.'], ['Alert', 'Visual, audio and event log.']].map((n, i) => (i ? '<span class="arr">→</span>' : '') + `<div class="node"><b>${n[0]}</b><div class="tip">${n[1]}</div></div>`).join('');
+        $('#layers').innerHTML = [['PERCEPTION', 'OpenCV · Face detection · Face landmarks · Object detection'], ['INTELLIGENCE', 'CNN · Temporal features · Risk fusion'], ['ACTION', 'Dashboard · Audio warning · Event logging']].map(l => `<div class="card"><h2>${l[0]} LAYER</h2>${l[1].split(' · ').map(x => `<div class="row"><span>${x}</span></div>`).join('')}</div>`).join('');
+        $('#drowCards').innerHTML = [['BLINK FREQUENCY', '17 /min'], ['CLOSURE DURATION', '0.18 s'], ['YAWNING', '0 /10 min'], ['HEAD NODDING', 'None'], ['FATIGUE SCORE', '<span data-b="drow"></span>'], ['EAR', '<span data-b="ear"></span>'], ['PERCLOS', '<span data-b="perclos"></span>'], ['STATE', '<span data-b="att"></span>']].map(c => `<div class="card"><div class="sub">${c[0]}</div><div class="m">${c[1]}</div></div>`).join('');
+        $('#inputs').innerHTML = [['EYE CLOSURE', 'perclos'], ['YAWNING', 'drow'], ['HEAD POSE', 'yaw'], ['GAZE', 'gaze'], ['PHONE / OBJECT', 'phone'], ['TEMPORAL BEHAVIOR', 'offt']].map(i => `<div class="node card" style="padding:10px"><div class="sub">${i[0]}</div><b data-b="${i[1]}"></b></div>`).join('');
+        $('#perfK').innerHTML = [['FPS', '28'], ['LATENCY', '41 ms'], ['PRECISION', '94%'], ['RECALL', '91%'], ['F1 SCORE', '92%'], ['CONFIDENCE', '94%'], ['FALSE ALERTS', 'Low'], ['INFERENCE', 'Local']].map(c => `<div class="card"><div class="sub">${c[0]}</div><div class="m">${c[1]}</div></div>`).join('');
+        const tests = [['DAYLIGHT', 'Front 15°', 'Bright', 'PASS', 38], ['LOW LIGHT', 'Front 15°', 'IR only', 'PASS', 44], ['BACKLIGHT', 'Front 15°', 'Sun glare', 'WARNING', 47], ['GLASSES', 'Front 20°', 'Daylight', 'PASS', 41], ['HEAD TURN', 'Front 15°', 'Daylight', 'PASS', 40], ['LONG GAZE', 'Front 15°', 'Daylight', 'PASS', 42], ['PHONE USE', 'Side 25°', 'Daylight', 'PASS', 52], ['MOTION BLUR', 'Front 15°', 'Dusk', 'WARNING', 49], ['NORMAL TALKING', 'Front 15°', 'Daylight', 'PASS', 39], ['YAWNING', 'Front 15°', 'Low', 'PASS', 43], ['EYE CLOSURE', 'Front 15°', 'Low', 'PASS', 41]];
+        $('#tests').innerHTML = '<tr><th>SCENARIO</th><th>DRIVER ID</th><th>CAMERA</th><th>LIGHTING</th><th>RESULT</th><th>LATENCY</th></tr>' + tests.map((t, i) => `<tr><td>${t[0]}</td><td class="mono">DRV-0${1 + i % 4}</td><td>${t[1]}</td><td>${t[2]}</td><td><span class="tag ${t[3] == 'PASS' ? 'n' : 'c'}" style="margin:0">${t[3]}</span></td><td class="mono">${t[4]} ms</td></tr>`).join('') + '<tr><td colspan=6 class="sub">Sample test-matrix data for demonstration.</td></tr>';
+        $('#priv').innerHTML = [['RAW VIDEO STORAGE', 0], ['EVENT LOGGING', 1], ['CLOUD UPLOAD', 0], ['LOCAL INFERENCE', 1]].map(p => `<div class="row" style="align-items:center"><span>${p[0]}</span><div style="display:flex;gap:10px;align-items:center"><b class="mono">${p[1] ? 'ON' : 'OFF'}</b><div class="sw ${p[1] ? 'on' : ''}" data-n="${p[0]}"></div></div></div>`).join('');
+        $$('.sw').forEach(s => s.onclick = () => { s.classList.toggle('on'); s.previousElementSibling.textContent = s.classList.contains('on') ? 'ON' : 'OFF'; toast(s.dataset.n + ' → ' + s.previousElementSibling.textContent) });
+        const dep = [['PROTOTYPE', 'Laptop / Mini PC · USB / IR camera · Speaker / buzzer'], ['EDGE AI', 'Raspberry Pi · NVIDIA Jetson · quantized models'], ['AUTOMOTIVE', 'Automotive ECU · GPU / NPU · functional-safety integration']];
+        $('#dep').innerHTML = dep.map((d, i) => (i ? '<span class="arr">→</span>' : '') + `<div class="node ph card" data-i="${i}"><b>${d[0]}</b></div>`).join('');
+        const sel = (sel, arr, out, el) => $$(sel).forEach(n => n.onclick = () => { $$(sel).forEach(x => x.classList.remove('on')); n.classList.add('on'); $(out).textContent = arr[+n.dataset.i] });
+        sel('#dep .ph', dep.map(d => d[1]), '#depd'); $('#dep .ph').click();
+        const rd = ['Camera + face landmarks', 'EAR / MAR + head pose', 'Temporal risk engine', 'CNN + object detection', 'Dashboard + logging', 'Edge optimization + testing'];
+        $('#road').innerHTML = rd.map((d, i) => `<div class="node ph ${i < 3 ? 'act' : ''}" data-i="${i}"><div class="sub">PHASE ${i + 1}</div>${d}</div>`).join('');
+        sel('#road .ph', rd.map((d, i) => `Phase ${i + 1}: ${d}. ${i < 3 ? 'Complete in this prototype demo.' : 'Planned.'}`), '#roadd');
+        $('#flt').innerHTML = ['All', 'Drowsiness', 'Distraction', 'Phone', 'Warnings'].map(f => `<button class="btn" data-f="${f}" style="margin-right:6px">${f}</button>`).join('');
+        $$('#flt .btn').forEach(b => b.onclick = () => { flt = b.dataset.f; renderEv() });
+        // ---- events
+        const clock = d => d.toTimeString().slice(0, 8);
+        function log(type, msg, l) { events.unshift({ d: new Date(), type, msg, l }); renderEv() }
+        [['Drowsiness', 'Blink detected', 'normal', -52], ['Distraction', 'Off-road gaze', 'caution', -35], ['Distraction', 'Attention restored', 'normal', -31], ['Drowsiness', 'Prolonged eye closure', 'caution', 9], ['Drowsiness', 'Audio alert triggered', 'critical', 12], ['Drowsiness', 'Driver recovered', 'normal', 20]].forEach(e => events.unshift({ d: new Date(Date.now() - 86400 + e[3] * -1000 - 60000 + e[3] * 1000), type: e[0], msg: e[1], l: e[2] }));
+        events.sort((a, b) => b.d - a.d);
+        const tag = { normal: ['n', 'Normal'], caution: ['c', 'Caution'], critical: ['k', 'Critical'] };
+        function row(e) { return `<div><time class="mono">${clock(e.d)}</time><span>${e.msg}</span><span class="tag ${tag[e.l][0]}">${tag[e.l][1]}</span></div>` }
+        function renderEv() { const f = events.filter(e => flt == 'All' || (flt == 'Warnings' ? e.l != 'normal' : flt == 'Phone' ? /phone/i.test(e.msg) : e.type == flt)); $('#tlFull').innerHTML = f.map(row).join(''); $('#tlMini').innerHTML = events.slice(0, 5).map(row).join('') }
+        renderEv();
+        // ---- simulation
+        const steps = {
+            drowsy: [[0, 'Normal driving', {}], [3, 'Blink detected', { blink: 1 }], [6, 'Prolonged eye closure', { drow: 48, ear: .15, perclos: 16, att: 1 }], [10, 'Yawning detected', { drow: 62, yawn: 1, pitch: -6 }], [13, 'Head nodding', { drow: 78, pitch: -20, ear: .13, perclos: 24 }], [16, 'Drowsiness risk — audio warning', { drow: 88, perclos: 30, beep: 1 }], [22, 'Driver recovered', { drow: 9, ear: .31, perclos: 4.5, yawn: 0, pitch: -3 }]],
+            distract: [[0, 'Head turn', { yaw: 32, dist: 34, gaze: 'LEFT MIRROR', off: 30, offt: 1.6 }], [3, 'Off-road gaze', { yaw: 42, dist: 52, gaze: 'OFF-ROAD', off: 60, offt: 2.8 }], [6, 'Phone detected', { phone: true, pconf: 97, pitch: -24, dist: 80, off: 78, offt: 4.6 }], [9, 'High distraction — audio warning', { dist: 92, off: 90, offt: 6.2, beep: 1 }], [13, 'Attention restored', { yaw: 8, pitch: -3, dist: 5, gaze: 'ROAD', off: 8, offt: .8, phone: false, pconf: 0 }]]
+        };
+        function run(list, done) { let i = 0, st = Date.now(); clearInterval(sim); sim = setInterval(() => { const s = (Date.now() - st) / 1000; while (i < list.length && list[i][0] <= s) { const [, m, p] = list[i++]; apply(p, m) } if (i >= list.length) { clearInterval(sim); sim = null; done && setTimeout(done, 2500) } }, 200) }
+        function apply(p, m) { const q = { ...p }; if (q.blink) { blinkT = 1; delete q.blink } if (q.beep) { beep(); delete q.beep } delete q.att; if (q.gaze !== undefined) { S.gaze = q.gaze; delete q.gaze } if (q.phone !== undefined) { S.phone = q.phone; delete q.phone } Object.assign(T, q); if (m) log(/phone|Phone|gaze|turn|distraction/.test(m) ? 'Distraction' : 'Drowsiness', m, /audio|High|warning/.test(m) ? 'critical' : /Normal|restored|recovered/.test(m) ? 'normal' : 'caution') }
+        $('#simBtn').onclick = () => {
+            if (sim) { clearInterval(sim); sim = null; Object.assign(T, base); S.phone = false; S.gaze = 'ROAD'; $('#simBtn').textContent = 'START SIMULATION'; return }
+            $('#simBtn').textContent = 'STOP SIMULATION'; toast('Simulation started (scripted demo telemetry)'); go('live'); run(steps.drowsy, () => run(steps.distract, () => { $('#simBtn').textContent = 'START SIMULATION'; toast('Simulation complete') }))
+        };
+        let ac; function beep() { try { ac = ac || new AudioContext(); const o = ac.createOscillator(), g = ac.createGain(); o.frequency.value = 880; g.gain.value = .05; o.connect(g); g.connect(ac.destination); o.start(); o.stop(ac.currentTime + .25) } catch (e) { } }
+        // ---- camera
+        $('#camBtn').onclick = async () => { try { const s = await navigator.mediaDevices.getUserMedia({ video: true }); $('#vid').srcObject = s; $('#vid').style.display = 'block'; $('#src').textContent = 'LIVE CAMERA · NO AI MODEL RUNNING'; $('#camlbl').textContent = 'LIVE CAMERA · values are simulated overlay'; $('#camBtn').style.display = 'none'; toast('Camera enabled. Metrics remain simulated.') } catch (e) { toast('Camera unavailable: ' + (e.name || 'error')) } };
+        // ---- drawing
+        function scene(c) {
+            const x = c.getContext('2d'), w = c.width = c.clientWidth * devicePixelRatio, h = c.height = c.clientHeight * devicePixelRatio; if (!w) return; const live = $('#vid').style.display == 'block'; x.clearRect(0, 0, w, h); const u = w / 640; x.save(); x.scale(u, u); const H = h / u;
+            if (!live) {
+                let g = x.createLinearGradient(0, 0, 0, H); g.addColorStop(0, '#2a3038'); g.addColorStop(.5, '#161a1f'); g.addColorStop(1, '#0b0d10'); x.fillStyle = g; x.fillRect(0, 0, 640, H); x.fillStyle = '#1d2229'; x.fillRect(0, 0, 70, H); x.fillStyle = '#0f1216'; x.fillRect(0, H * .8, 640, H);
+                x.fillStyle = '#1a1f26'; x.beginPath(); x.ellipse(320, H * .95, 190, H * .35, 0, 0, 7); x.fill(); x.strokeStyle = '#07080a'; x.lineWidth = 16; x.beginPath(); x.ellipse(330, H * 1.15, 150, H * .3, 0, Math.PI, 0); x.stroke()
+            }
+            const cx = 320 + S.yaw * 1.6, cy = H * .42 + S.pitch * 1.2, o = cl((S.ear - .1) / .21, .06, 1), ys = S.yawn;
+            if (!live) {
+                x.fillStyle = '#8c6f5e'; x.beginPath(); x.ellipse(cx, cy, 62, 78, 0, 0, 7); x.fill(); x.fillStyle = '#231d1a'; x.beginPath(); x.ellipse(cx, cy - 40, 64, 48, 0, Math.PI, 0); x.fill(); x.fillStyle = '#232a33'; x.beginPath(); x.roundRect(cx - 95 - S.yaw, cy + 85, 190, 200, 40); x.fill();
+                [-24, 24].forEach(d => { x.fillStyle = '#e8e2dc'; x.beginPath(); x.ellipse(cx + d, cy - 6, 12, 12 * o, 0, 0, 7); x.fill(); x.fillStyle = '#201a16'; x.beginPath(); x.arc(cx + d + (S.gaze == 'ROAD' ? 0 : S.yaw / 6), cy - 6, 4 * o, 0, 7); x.fill() }); x.fillStyle = '#5a3a35'; x.beginPath(); x.ellipse(cx, cy + 38, 16, 4 + 22 * ys, 0, 0, 7); x.fill()
+            }
+            const st = getComputedStyle(document.body).getPropertyValue('--st').trim() || '#3ddc84'; x.strokeStyle = st; x.fillStyle = st; x.lineWidth = 1.5; x.strokeRect(cx - 78, cy - 96, 156, 176); x.font = '10px ui-monospace,monospace'; x.fillText('DRIVER  ' + (S.conf / 100).toFixed(2), cx - 78, cy - 102);
+            x.lineWidth = 1;[-24, 24].forEach(d => { x.strokeRect(cx + d - 16, cy - 6 - 10 * o - 2, 32, 20 * o + 4) }); x.strokeRect(cx - 20, cy + 38 - 8 - 20 * ys, 40, 16 + 40 * ys);
+            for (let i = 0; i < 10; i++) { x.fillRect(cx - 24 + (i % 5) * 12 - 24 * (i < 5 ? 1 : -1) * 0 - 12 + (i >= 5 ? 48 : 0), cy - 6 + (i % 2 ? 4 * o : -4 * o), 2, 2) }
+            x.beginPath(); x.moveTo(cx, cy); x.lineTo(cx + S.yaw * 1.5 + 30, cy - S.pitch); x.setLineDash([4, 4]); x.stroke(); x.setLineDash([]); x.strokeStyle = '#ff4d4f'; x.beginPath(); x.moveTo(cx, cy + 10); x.lineTo(cx + 36, cy + 10 - S.pitch / 2); x.stroke(); x.strokeStyle = '#3ddc84'; x.beginPath(); x.moveTo(cx, cy + 10); x.lineTo(cx, cy - 30 + S.pitch); x.stroke();
+            if (S.phone) { x.fillStyle = '#1a1d22'; x.fillRect(cx + 80, cy + 60, 34, 58); x.strokeStyle = '#ffb020'; x.strokeRect(cx + 72, cy + 52, 50, 74); x.fillStyle = '#ffb020'; x.fillText('PHONE ' + Math.round(S.pconf) + '%', cx + 66, cy + 46) } x.restore()
+        }
+        function pose(c) { const x = c.getContext('2d'); x.clearRect(0, 0, 300, 190); x.strokeStyle = '#2d3541'; x.fillStyle = '#1b2027'; const cx = 150 + S.yaw * 1.5, cy = 95 + S.pitch; x.beginPath(); x.ellipse(150, 95, 70, 85, 0, 0, 7); x.stroke(); x.beginPath(); x.ellipse(cx, cy, 46, 58, S.roll / 60, 0, 7); x.fill(); x.stroke(); x.lineWidth = 2;[['#ff4d4f', 60, 0], ['#3ddc84', 0, -55 - S.pitch], ['#4da3ff', -25, -25]].forEach(a => { x.strokeStyle = a[0]; x.beginPath(); x.moveTo(cx, cy); x.lineTo(cx + a[1] + (a[0] == '#ff4d4f' ? S.yaw : 0), cy + a[2]); x.stroke() }) }
+        function chart(id, a, col, mn, mx) { const c = document.getElementById(id); if (!c || !c.clientWidth) return; const w = c.width = c.clientWidth * 2, h = c.height = c.clientHeight * 2, x = c.getContext('2d'); x.strokeStyle = '#1d232b'; x.lineWidth = 1; for (let i = 1; i < 4; i++) { x.beginPath(); x.moveTo(0, h * i / 4); x.lineTo(w, h * i / 4); x.stroke() } x.strokeStyle = col; x.lineWidth = 3; x.beginPath(); a.forEach((v, i) => { const px = i / 59 * w, py = h - (v - mn) / (mx - mn) * h; i ? x.lineTo(px, py) : x.moveTo(px, py) }); x.stroke() }
+        // ---- loop
+        function bind() { $$('[data-b]').forEach(e => { const k = e.dataset.b; const v = F[k] ? F[k](S[k]) : ''; if (e.textContent !== String(v)) e.textContent = v }); $$('[data-w]').forEach(e => e.style.width = cl(W[e.dataset.w] ? W[e.dataset.w]() : S[e.dataset.w], 0, 100) + '%'); $$('[data-g]').forEach(e => e.setAttribute('stroke-dasharray', cl(S[e.dataset.g], 0, 100) + ' 100')); $$('[data-lv]').forEach(e => e.classList.toggle('act', e.dataset.lv == lvl)); $$('[data-ac]').forEach(e => e.classList.toggle('act', e.dataset.ac == lvl)) }
+        const msg = { normal: ['LEVEL 0 — NORMAL', 'Driver attention normal. No intervention.'], caution: ['LEVEL 1 — CAUTION', 'Prolonged attention deviation detected. Visual warning.'], critical: ['LEVEL 2 — CRITICAL', 'Drowsiness / distraction risk detected. Audio warning. Event logged.'] };
+        let n = 0; setInterval(() => {
+            n++;
+            ['drow', 'dist', 'conf', 'perclos', 'yaw', 'pitch', 'roll', 'off', 'offt', 'yawn', 'pconf', 'fps', 'lat'].forEach(k => S[k] += (T[k] - S[k]) * .12);
+            if (!sim) { T.fps = 28 + Math.sin(n / 9) * 1.2; T.lat = 41 + Math.sin(n / 7) * 3; T.conf = 94 + Math.sin(n / 11); T.yaw = 8 + Math.sin(n / 13) * 3; T.pitch = -3 + Math.sin(n / 17) * 1.5 }
+            if (!sim || true) { if (blinkT > 0) { blinkT -= .15; S.ear = .12 + (1 - Math.abs(blinkT - .5) * 2) * 0; S.ear = blinkT > .5 ? .13 : .2 } else { if (Math.random() < .012) blinkT = 1; S.ear += (T.ear - S.ear) * .2 + (Math.random() - .5) * .01 } }
+            if (S.phone) S.pconf += (T.pconf - S.pconf) * .1;
+            const l = lv(); if (l != lvl) { lvl = l; document.body.dataset.l = l; if (sim || l != 'normal') toast(msg[l][0]) }
+            $('#alertBox').innerHTML = `<b style="color:var(--st)">${msg[lvl][0]}</b><br>${msg[lvl][1]}`;
+            $('#distEv').innerHTML = S.phone && S.off > 50 ? '<b style="color:var(--r)">HIGH DISTRACTION RISK</b><br>PHONE DETECTED + OFF-ROAD GAZE + PROLONGED DURATION → HIGH DISTRACTION EVIDENCE' : '<b>Monitoring</b> — no compound distraction evidence.';
+            if (n % 5 == 0) { hist.ear.push(S.ear); hist.lat.push(S.lat); hist.conf.push(S.conf); hist.risk.push(Math.max(S.drow, S.dist)); hist.fps.push(S.fps); Object.values(hist).forEach(a => { while (a.length < 60) a.unshift(a[0] ?? 0); a.length > 60 && a.shift() }); $('#camlbl').dataset.t = n }
+            bind(); $$('canvas[data-scene]').forEach(scene); if (cur == 'distraction') pose($('#pose'));
+            if (cur == 'drowsiness') chart('c_ear', hist.ear, '#3ddc84', .05, .4); if (cur == 'performance') { chart('c_lat', hist.lat, '#4da3ff', 30, 60); chart('c_conf', hist.conf, '#3ddc84', 80, 100); chart('c_risk', hist.risk, '#ffb020', 0, 100); chart('c_fps', hist.fps, '#c9a0ff', 20, 35) }
+        }, 100);
+    </script>
+</body>
+
+</html>
